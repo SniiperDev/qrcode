@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <link rel="manifest" href="manifest.json">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Solde porte monnaie</title>
+</head>
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js" integrity="sha512-k/KAe4Yff9EUdYI5/IAHlwUswqeipP+Cp5qnrsUjTPCgl51La2/JhyyjNciztD7mWNKLSXci48m7cctATKfLlQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+}
+
+header {
+  background-color: #333;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+#reader {
+  width: 400px;
+  border: 2px solid #ddd;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+#result {
+  text-align: center;
+  font-size: 1.5rem;
+  margin-top: 1rem;
+}
+
+#welcome-message {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+#balance {
+  font-size: 1.5rem;
+  color: #333;
+  margin-top: 2rem;
+  padding: 1rem;
+  text-align: center;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#balance span {
+  color: #007bff;
+  font-weight: bold;
+}
+
+#balance-form {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#new-balance {
+  margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+#change-balance-btn {
+  margin-top: 0.5rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+#updated-balance {
+  font-size: 1.2rem;
+  margin-top: 1rem;
+  color: green;
+}
+</style>
+<header>
+  <h1>Solde porte monnaie</h1>
+</header>
+<main>
+<div id="reader"></div>
+<div id="result"></div>
+</main>
+<script>
+// Fonction pour charger les données de solde depuis le stockage local
+function loadUserBalances() {
+  const savedBalances = localStorage.getItem('userBalances');
+  return savedBalances ? JSON.parse(savedBalances) : {};
+}
+
+// Fonction pour sauvegarder les données de solde dans le stockage local
+function saveUserBalances(userBalances) {
+  localStorage.setItem('userBalances', JSON.stringify(userBalances));
+}
+
+// Charger les données de solde au démarrage
+let userBalances = loadUserBalances();
+
+// Reste de votre code JavaScript
+
+const allowedQRCodeData = "4698326"; // Le QR code autorisé
+
+const scanner = new Html5QrcodeScanner('reader', {
+qrbox: {
+width: 300,
+height: 300,
+},
+fps: 20,
+});
+scanner.render(success, error);
+
+function success(result) {
+  if (result === allowedQRCodeData) {
+    const username = "Nolan"; // Remplacez par le nom d'utilisateur extrait du QR code si nécessaire
+    let balance = userBalances[username] || 0;
+    document.getElementById('result').innerHTML = `
+    <div id="welcome-message">
+      Bienvenue, ${username}!
+    </div>
+    <div id="balance">
+      Votre solde d'argent est de <span id="animated-balance">${balance} €</span>.
+      <form id="balance-form">
+        <input type="number" id="new-balance" placeholder="Nouveau solde" step="0.01" min="0">
+        <button id="change-balance-btn">Changer le solde</button>
+      </form>
+    </div>
+    <a href="index.html"><button>Sortir</button></a>
+    <div id="updated-balance"></div>
+    `;
+    
+    const changeBalanceBtn = document.getElementById('change-balance-btn');
+    const updatedBalanceDiv = document.getElementById('updated-balance');
+    
+    changeBalanceBtn.addEventListener('click', function(event) {
+      event.preventDefault();
+      
+      const newBalanceInput = document.getElementById('new-balance');
+      const newBalance = parseFloat(newBalanceInput.value);
+      
+      if (!isNaN(newBalance)) {
+        userBalances[username] = newBalance;
+        saveUserBalances(userBalances); // Sauvegarder les données de solde
+        balance = newBalance; // Mise à jour du solde
+        updateBalanceDisplay(balance);
+        updatedBalanceDiv.textContent = `Solde mis à jour : ${newBalance} €`;
+      }
+    });
+  } else {
+    document.getElementById('result').innerHTML = `
+    <h2>Utilisateur non reconnu</h2>
+    `;
+  }
+  scanner.clear();
+  document.getElementById('reader').remove();
+}
+
+function error(err) {
+  console.error(err);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then((stream) => {
+      // La caméra est activée
+    })
+    .catch((error) => {
+      console.error('Impossible d\'accéder à la caméra:', error);
+    });
+});
+
+function updateBalanceDisplay(balance) {
+  const animatedBalance = document.getElementById('animated-balance');
+  animatedBalance.textContent = `${balance} €`;
+}
+</script>
+  
+</body>
+</html>
